@@ -1,11 +1,15 @@
 {
-    "name": "phpcasperjs/phpcasperjs",
+    "name": "xenze/php-casperjs",
     "description": "Simple PHP wrapper for CasperJS",
-    "homepage": "https://github.com/alwex/php-casperjs",
+    "homepage": "https://github.com/xenze/php-casperjs",
     "keywords": ["phpunit", "test", "browser"],
     "type": "library",
     "license": "MIT",
     "authors": [
+        {
+            "name": "xenze",
+            "email": "xenze@gmx.de"
+        },
         {
             "name": "GUIDET Alexandre",
             "email": "alwex@free.fr"
