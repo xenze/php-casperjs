@@ -197,12 +197,16 @@ FRAGMENT;
         $this->clear();
 
         $fragment = <<<FRAGMENT
+        
 var xpath = require('casper').selectXPath;
 var casper = require('casper').create({
     verbose: true,
     logLevel: 'debug',
     colorizerType: 'Dummy'
 });
+
+var fs = require('fs');
+var utils = require('utils');
 
 casper.userAgent('$this->userAgent');
 casper.start().then(function() {
@@ -253,6 +257,44 @@ FRAGMENT;
     {
         $jsonData = json_encode($data);
         $jsonSubmit = ($submit) ? 'true' : 'false';
+
+        $fragment = <<<FRAGMENT
+casper.then(function () {
+    this.fill('$selector', $jsonData, $jsonSubmit);
+});
+FRAGMENT;
+
+        $this->script .= $fragment;
+
+        return $this;
+    }
+
+    /**
+     * fill the form with the array of data and an additional
+     * optional array of raw data (allowing executable js code)
+     * then submit it if submit is true
+     *
+     * @param string $selector
+     * @param array $data
+     * @param array $raw
+     * @param string|bool $submit
+     *
+     * @return \Browser\Casper
+     */
+    public function fillFormSpecial($selector, $data = array(), $raw = array(), $submit = false)
+    {
+        $jsonData = json_encode($data);
+        $jsonSubmit = ($submit) ? 'true' : 'false';
+
+        $rawString = '';
+        if (count($raw) > 0) {
+            foreach ($raw as $field => $value) {
+                $rawString .= ", \"$field\": $value";
+            }
+
+            $jsonData = substr($jsonData, 0, -1);
+            $jsonData = $jsonData . $rawString . '}';
+        }
 
         $fragment = <<<FRAGMENT
 casper.then(function () {
@@ -349,6 +391,46 @@ casper.wait(
         this.echo('timeout occured');
     }
 );
+
+FRAGMENT;
+
+        $this->script .= $fragment;
+
+        return $this;
+    }
+
+    /**
+     * echoes some text
+     *
+     * @param string $text
+     * @return $this
+     */
+    public function echoText($text = '')
+    {
+        $fragment = <<<FRAGMENT
+casper.then(function() {
+    this.echo('$text');
+});
+
+FRAGMENT;
+
+        $this->script .= $fragment;
+
+        return $this;
+    }
+
+    /**
+     * echoes some js code or js variable
+     *
+     * @param string $var
+     * @return $this
+     */
+    public function echoSpecial($var = '')
+    {
+        $fragment = <<<FRAGMENT
+casper.then(function() {
+    this.echo($var);
+});
 
 FRAGMENT;
 
@@ -568,10 +650,11 @@ FRAGMENT;
      * run the casperJS script and return the stdOut
      * in using the output variable
      *
+     * @param bool $unlinkTempFile
      * @return array
      * @throws \Exception
      */
-    public function run()
+    public function run($unlinkTempFile = true)
     {
         $output = array();
 
@@ -610,7 +693,9 @@ FRAGMENT;
         $this->setOutput($output);
         $this->processOutput();
 
-        unlink($filename);
+        if ($unlinkTempFile === true) {
+            unlink($filename);
+        }
 
         return $output;
     }
